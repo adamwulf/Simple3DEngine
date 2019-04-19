@@ -106,8 +106,28 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
         
     };
     
-    float screenWidth = 1024;
-    float screenHeight = 768;
+    [super awakeFromNib];
+}
+
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect {
+    
+    float(^ScreenWidth)() = ^{
+        return (float) CGRectGetWidth([self bounds]);
+    };
+    
+    float(^ScreenHeight)() = ^{
+        return (float) CGRectGetWidth([self bounds]);
+    };
+    
+
+    if(!_lastDisplay){
+        _lastDisplay = [NSDate date];
+    }
+    
+    NSTimeInterval fElapsedTime = [_lastDisplay timeIntervalSinceNow];
+    _lastDisplay = [NSDate date];
     
     // Projection Matrix
     float fNear = 0.1f;
@@ -123,34 +143,6 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
     matProj.m[2][3] = 1.0f;
     matProj.m[3][3] = 0.0f;
     
-    [super awakeFromNib];
-}
-
-float ScreenWidth(){
-    return 1024;
-}
-
-float ScreenHeight(){
-    return 768;
-}
-
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect {
-    if(!_lastDisplay){
-        _lastDisplay = [NSDate date];
-    }
-    
-    NSTimeInterval fElapsedTime = [_lastDisplay timeIntervalSinceNow];
-    _lastDisplay = [NSDate date];
-    
-    
-    
-    [[UIColor blackColor] setStroke];
-    [[UIBezierPath bezierPathWithRect:CGRectMake(100, 100, 100, 100)] stroke];
-
-
-
     // Set up rotation matrices
     mat4x4 matRotZ, matRotX;
     fTheta += 1.0f * fElapsedTime;
@@ -218,12 +210,6 @@ float ScreenHeight(){
         
         [[UIColor blackColor] setStroke];
         [triPath stroke];
-        
-//        DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
-//                     triProjected.p[1].x, triProjected.p[1].y,
-//                     triProjected.p[2].x, triProjected.p[2].y,
-//                     PIXEL_SOLID, FG_WHITE);
-        
     }
     
 }
