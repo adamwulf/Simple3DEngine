@@ -23,11 +23,51 @@ struct vec3d
 struct triangle
 {
     vec3d p[3];
+    
+    float col;
 };
 
 struct mesh
 {
     vector<triangle> tris;
+    
+    bool LoadFromObjectFile(string sFilename)
+    {
+        ifstream f(sFilename);
+        if (!f.is_open())
+            return false;
+        
+        // Local cache of verts
+        vector<vec3d> verts;
+        
+        while (!f.eof())
+        {
+            char line[128];
+            f.getline(line, 128);
+            
+            strstream s;
+            s << line;
+            
+            char junk;
+            
+            if (line[0] == 'v')
+            {
+                vec3d v;
+                s >> junk >> v.x >> v.y >> v.z;
+                verts.push_back(v);
+            }
+            
+            if (line[0] == 'f')
+            {
+                int f[3];
+                s >> junk >> f[0] >> f[1] >> f[2];
+                tris.push_back({ verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1] });
+            }
+        }
+        
+        return true;
+    }
+    
 };
 
 struct mat4x4
@@ -37,6 +77,8 @@ struct mat4x4
 
 mesh meshCube;
 mat4x4 matProj;
+
+vec3d vCamera;
 
 float fTheta;
 
@@ -163,6 +205,9 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
     matRotX.m[2][2] = cosf(fTheta * 0.5f);
     matRotX.m[3][3] = 1;
     
+    // Store triagles for rastering later
+    vector<triangle> vecTrianglesToRaster;
+    
     // Draw Triangles
     for (auto tri : meshCube.tris)
     {
@@ -180,38 +225,101 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
         
         // Offset into the screen
         triTranslated = triRotatedZX;
-        triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
-        triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
-        triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
+        triTranslated.p[0].z = triRotatedZX.p[0].z + 8.0f;
+        triTranslated.p[1].z = triRotatedZX.p[1].z + 8.0f;
+        triTranslated.p[2].z = triRotatedZX.p[2].z + 8.0f;
         
-        // Project triangles from 3D --> 2D
-        MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
-        MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
-        MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+        // Use Cross-Product to get surface normal
+        vec3d normal, line1, line2;
+        line1.x = triTranslated.p[1].x - triTranslated.p[0].x;
+        line1.y = triTranslated.p[1].y - triTranslated.p[0].y;
+        line1.z = triTranslated.p[1].z - triTranslated.p[0].z;
         
-        // Scale into view
-        triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
-        triProjected.p[1].x += 1.0f; triProjected.p[1].y += 1.0f;
-        triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
-        triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
-        triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
-        triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
-        triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
-        triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
-        triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
+        line2.x = triTranslated.p[2].x - triTranslated.p[0].x;
+        line2.y = triTranslated.p[2].y - triTranslated.p[0].y;
+        line2.z = triTranslated.p[2].z - triTranslated.p[0].z;
         
-        // Rasterize triangle
+        normal.x = line1.y * line2.z - line1.z * line2.y;
+        normal.y = line1.z * line2.x - line1.x * line2.z;
+        normal.z = line1.x * line2.y - line1.y * line2.x;
         
+        // It's normally normal to normalise the normal
+        float l = sqrtf(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
+        normal.x /= l; normal.y /= l; normal.z /= l;
+        
+        //if (normal.z < 0)
+        if(normal.x * (triTranslated.p[0].x - vCamera.x) +
+           normal.y * (triTranslated.p[0].y - vCamera.y) +
+           normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
+        {
+            // Illumination
+            vec3d light_direction = { 0.0f, 0.0f, -1.0f };
+            float l = sqrtf(light_direction.x*light_direction.x + light_direction.y*light_direction.y + light_direction.z*light_direction.z);
+            light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
+            
+            // How similar is normal to light direction
+            float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
+            
+            // Choose console colours as required (much easier with RGB)
+            triTranslated.col = dp;
+            
+            // Project triangles from 3D --> 2D
+            MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
+            MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
+            MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+            triProjected.col = triTranslated.col;
+            
+            // Scale into view
+            triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
+            triProjected.p[1].x += 1.0f; triProjected.p[1].y += 1.0f;
+            triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
+            triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
+            triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
+            triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
+            triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
+            triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
+            triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
+            
+            // Store triangle for sorting
+            vecTrianglesToRaster.push_back(triProjected);
+        }
+        
+    }
+    
+    // Sort triangles from back to front
+    sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle &t1, triangle &t2)
+         {
+             float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
+             float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+             return z1 > z2;
+         });
+    
+    for (auto &triProjected : vecTrianglesToRaster)
+    {
         UIBezierPath *triPath = [UIBezierPath bezierPath];
         [triPath moveToPoint:CGPointMake(triProjected.p[0].x, triProjected.p[0].y)];
         [triPath addLineToPoint:CGPointMake(triProjected.p[1].x, triProjected.p[1].y)];
         [triPath addLineToPoint:CGPointMake(triProjected.p[2].x, triProjected.p[2].y)];
         [triPath closePath];
         
-        [[UIColor blackColor] setStroke];
-        [triPath stroke];
+        float color = triProjected.col;
+        [[UIColor colorWithRed:color green:color blue:color alpha:1.0] setFill];
+        [triPath fill];
+
+        
+        
+        // Rasterize triangle
+//        FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
+//                     triProjected.p[1].x, triProjected.p[1].y,
+//                     triProjected.p[2].x, triProjected.p[2].y,
+//                     triProjected.sym, triProjected.col);
+        
+        /*DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
+         triProjected.p[1].x, triProjected.p[1].y,
+         triProjected.p[2].x, triProjected.p[2].y,
+         PIXEL_SOLID, FG_BLACK);*/
     }
-    
+
 }
 
 @end
