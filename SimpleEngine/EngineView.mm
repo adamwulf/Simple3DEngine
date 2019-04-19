@@ -225,9 +225,9 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
         
         // Offset into the screen
         triTranslated = triRotatedZX;
-        triTranslated.p[0].z = triRotatedZX.p[0].z + 8.0f;
-        triTranslated.p[1].z = triRotatedZX.p[1].z + 8.0f;
-        triTranslated.p[2].z = triRotatedZX.p[2].z + 8.0f;
+        triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
+        triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
+        triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
         
         // Use Cross-Product to get surface normal
         vec3d normal, line1, line2;
@@ -302,22 +302,10 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
         [triPath addLineToPoint:CGPointMake(triProjected.p[2].x, triProjected.p[2].y)];
         [triPath closePath];
         
-        float color = triProjected.col;
-        [[UIColor colorWithRed:color green:color blue:color alpha:1.0] setFill];
+        float color = triProjected.col * .9;
+        [[UIColor colorWithRed:color green:color blue:color alpha:1.0] set];
         [triPath fill];
-
-        
-        
-        // Rasterize triangle
-//        FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
-//                     triProjected.p[1].x, triProjected.p[1].y,
-//                     triProjected.p[2].x, triProjected.p[2].y,
-//                     triProjected.sym, triProjected.col);
-        
-        /*DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
-         triProjected.p[1].x, triProjected.p[1].y,
-         triProjected.p[2].x, triProjected.p[2].y,
-         PIXEL_SOLID, FG_BLACK);*/
+        [triPath stroke];
     }
 
 }
