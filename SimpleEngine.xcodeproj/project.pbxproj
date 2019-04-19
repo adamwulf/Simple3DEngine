@@ -13,7 +13,7 @@
 		C576D59D22697C7A00B17A44 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C576D59C22697C7A00B17A44 /* Assets.xcassets */; };
 		C576D5A022697C7A00B17A44 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C576D59E22697C7A00B17A44 /* LaunchScreen.storyboard */; };
 		C576D5A322697C7A00B17A44 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C576D5A222697C7A00B17A44 /* main.m */; };
-		C576D5AB22697C9100B17A44 /* EngineView.m in Sources */ = {isa = PBXBuildFile; fileRef = C576D5AA22697C9100B17A44 /* EngineView.m */; };
+		C576D5AB22697C9100B17A44 /* EngineView.mm in Sources */ = {isa = PBXBuildFile; fileRef = C576D5AA22697C9100B17A44 /* EngineView.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,7 +28,7 @@
 		C576D5A122697C7A00B17A44 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C576D5A222697C7A00B17A44 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		C576D5A922697C9100B17A44 /* EngineView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EngineView.h; sourceTree = "<group>"; };
-		C576D5AA22697C9100B17A44 /* EngineView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EngineView.m; sourceTree = "<group>"; };
+		C576D5AA22697C9100B17A44 /* EngineView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EngineView.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,7 +66,7 @@
 				C576D59622697C7800B17A44 /* ViewController.h */,
 				C576D59722697C7800B17A44 /* ViewController.m */,
 				C576D5A922697C9100B17A44 /* EngineView.h */,
-				C576D5AA22697C9100B17A44 /* EngineView.m */,
+				C576D5AA22697C9100B17A44 /* EngineView.mm */,
 				C576D59922697C7800B17A44 /* Main.storyboard */,
 				C576D59C22697C7A00B17A44 /* Assets.xcassets */,
 				C576D59E22697C7A00B17A44 /* LaunchScreen.storyboard */,
@@ -146,7 +146,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C576D5AB22697C9100B17A44 /* EngineView.m in Sources */,
+				C576D5AB22697C9100B17A44 /* EngineView.mm in Sources */,
 				C576D59822697C7800B17A44 /* ViewController.m in Sources */,
 				C576D5A322697C7A00B17A44 /* main.m in Sources */,
 				C576D59522697C7800B17A44 /* AppDelegate.m in Sources */,
