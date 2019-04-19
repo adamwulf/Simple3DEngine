@@ -101,7 +101,8 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
 
 @property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic, strong) NSDate *lastDisplay;
-
+@property (nonatomic, strong) UIPanGestureRecognizer *panGesture;
+@property (nonatomic, assign) CGPoint gestureTranslation;
 @end
 
 @implementation EngineView
@@ -109,6 +110,7 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
 -(void)didMoveToSuperview{
     if([self superview]){
         _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(setNeedsDisplay)];
+        [_displayLink setPreferredFramesPerSecond:30];
         [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
     }
 }
@@ -148,7 +150,32 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
         
     };
     
+    
+    vCamera.x = 0;
+    vCamera.y = 0;
+    vCamera.z = 0;
+
+    _panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGesture:)];
+    [_panGesture setMinimumNumberOfTouches:1];
+    [_panGesture setMaximumNumberOfTouches:1];
+    [self addGestureRecognizer:_panGesture];
+    
     [super awakeFromNib];
+}
+
+-(void)panGesture:(UIPanGestureRecognizer*)panGesture{
+    if(panGesture.state == UIGestureRecognizerStateBegan){
+        _gestureTranslation = [panGesture translationInView:self];
+        return;
+    }
+    
+    CGPoint t = [panGesture translationInView:self];
+    CGPoint delta = CGPointMake(t.x - _gestureTranslation.x, t.y - _gestureTranslation.y);
+    _gestureTranslation = t;
+    
+    vCamera.x += delta.x / 100.0;
+    vCamera.y += delta.y / 100.0;
+    vCamera.z = 0;
 }
 
 // Only override drawRect: if you perform custom drawing.
@@ -225,8 +252,14 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
         
         // Offset into the screen
         triTranslated = triRotatedZX;
+        triTranslated.p[0].x = triRotatedZX.p[0].x - vCamera.x;
+        triTranslated.p[0].y = triRotatedZX.p[0].y - vCamera.y;
         triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
+        triTranslated.p[1].x = triRotatedZX.p[1].x - vCamera.x;
+        triTranslated.p[1].y = triRotatedZX.p[1].y - vCamera.y;
         triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
+        triTranslated.p[2].x = triRotatedZX.p[2].x - vCamera.x;
+        triTranslated.p[2].y = triRotatedZX.p[2].y - vCamera.y;
         triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
         
         // Use Cross-Product to get surface normal
@@ -302,10 +335,14 @@ void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
         [triPath addLineToPoint:CGPointMake(triProjected.p[2].x, triProjected.p[2].y)];
         [triPath closePath];
         
-        float color = triProjected.col * .9;
-        [[UIColor colorWithRed:color green:color blue:color alpha:1.0] set];
+        float color = triProjected.col * .5;
+        [[UIColor colorWithRed:color green:color blue:color alpha:1.0] setFill];
         [triPath fill];
+        
+        [[UIColor blackColor] setStroke];
         [triPath stroke];
+        
+        
     }
 
 }
